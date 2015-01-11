@@ -281,6 +281,15 @@
   <ItemGroup>
     <ClCompile Include="Source\APIParser.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include="Output\Win32\Debug\rF2_API_Logger.dll" />
+    <None Include="Output\Win32\Release\rF2_API_Logger.dll" />
+    <None Include="Output\x64\Debug\rF2_API_Logger_x64.dll" />
+    <None Include="Output\x64\Release\rF2_API_Logger_x64.dll" />
+    <None Include="README.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

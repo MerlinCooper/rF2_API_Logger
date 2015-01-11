@@ -43,7 +43,7 @@ APIParser::APIParser() {
 #ifdef _DEBUG
 	MessageBox(NULL, version_number.c_str(), "API Parser PlugIn loaded", MB_OK);
 #endif
-	logFile.open("APIParser.log", ios_base::out | ios_base::trunc );
+	logFile.open("rF2_API_Logger.txt", ios_base::out | ios_base::trunc );
 	logFile << "Runtime [µs]" << "\t" << "Base Class" << "\t" << "Methode" << "\t" << "Remark" << "\n";
 	logFile << timeAsString() << "\t" << "n/a" << "\t" << "APIParser::APIParser()" << "\t" << "Main Class Constructor called" << "\n";
 	logFile.flush();
