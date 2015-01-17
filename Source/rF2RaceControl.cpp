@@ -13,7 +13,7 @@
 
 
 // GLOBAL variables
-const std::string version_number("rF2RaceControl PlugIn 0.7.1");
+const std::string version_number("rF2RaceControl PlugIn 0.7.2");
 
 
 // plugin information
@@ -44,42 +44,66 @@ MessageBox(NULL, "rF2RaceControl_SetEnvironment is being loaded (DEBUG Version)"
 
 
 void rF2RaceControl_Main::UpdateScoring(const ScoringInfoV01 &info){
-	bool bDriverLeftRace = false;
-	VehicleScoringInfoV01 *ptrVeh = info.mVehicle;
-	
-	for (long vehCnt = info.mNumVehicles; vehCnt > 0; vehCnt--) {
-		//if (NULL != info.mVehicle)
-			bDriverLeftRace = chatWnd.CheckDriverLeftRace(info.mVehicle->mDriverName);
 
-		// compare to the previous driver list
-		DRSEvent vehicleToSearch(ptrVeh->mDriverName, ptrVeh->mVehicleName);	
 
-		POSITION mIndex = mTeams.Find(vehicleToSearch);
+	if (NULL != info.mVehicle) {
+		bool bDriverLeftRace = false;
 		
-		driverIterator foundVehicle = find(m_DriverList.begin(), m_DriverList.end(), vehicleToSearch);
+		VehicleScoringInfoV01 *ptrVeh = info.mVehicle;
 
-		if (bDriverLeftRace) {
-			m_DriverList.erase(foundVehicle);
-			//POSITION mIndex = mTeams.FindIndex(vehicleToSearch);
-			if (NULL != mIndex)
-				mTeams.RemoveAt(mIndex);
-			bDriverLeftRace = false;											//Set to false because one driver already deleted from list
-		}
-		else {
-			if (foundVehicle == m_DriverList.end())	{							//if first time that UpdateScoring is called for specific vehicle/driver combination
-				WriteSrvWelcomMsg(ptrVeh->mDriverName);			//write Server Welcome Message in Chat Window
-				m_DriverList.insert(m_DriverList.begin(), vehicleToSearch);		//add vehicle to the list
-				mTeams.AddTail(vehicleToSearch);
+		CString driverName;
+		if (chatWnd.CheckDriverLeftRace(driverName)) {										//a driver left the race
+			DRSEvent toFind(driverName.GetString(), "");
+			POSITION pos = mTeams.Find(toFind);
+			if (NULL != pos)
+				mTeams.RemoveAt(pos);
 			}
 
+		for (long vehCnt = info.mNumVehicles; vehCnt > 0; vehCnt--) {
+			DRSEvent vehicleToSearch(ptrVeh->mDriverName, ptrVeh->mVehicleName);
+			//if (NULL != info.mVehicle)
+			//bDriverLeftRace = chatWnd.CheckDriverLeftRace(info.mVehicle->mDriverName);
+
+			// compare to the previous driver list
+
+
+			POSITION mIndex = mTeams.Find(vehicleToSearch);
+
+			if (NULL == mIndex) {													//new driver not yet in list
+				mTeams.AddTail(vehicleToSearch);									//add driver to list
+				WriteSrvWelcomMsg(ptrVeh->mDriverName);								//write Server Welcome Message in Chat Window
+			}
+			//else if (chatWnd.CheckDriverLeftRace(ptrVeh->mDriverName)) {		//driver already in list and did leave the game?
+			//	mTeams.RemoveAt(mIndex);
+			//}
+			//else {																	//check whether driver violated a rule
+
+			//}
+
+
+			//if (bDriverLeftRace) {
+			//	m_DriverList.erase(foundVehicle);
+			//	//POSITION mIndex = mTeams.FindIndex(vehicleToSearch);
+			//	if (NULL != mIndex)
+			//		mTeams.RemoveAt(mIndex);
+			//	bDriverLeftRace = false;											//Set to false because one driver already deleted from list
+			//}
+			//else {
+			//	if (foundVehicle == m_DriverList.end())	{							//if first time that UpdateScoring is called for specific vehicle/driver combination
+			//		WriteSrvWelcomMsg(ptrVeh->mDriverName);			//write Server Welcome Message in Chat Window
+			//		m_DriverList.insert(m_DriverList.begin(), vehicleToSearch);		//add vehicle to the list
+			//		mTeams.AddTail(vehicleToSearch);
+			//	}
+
+			//}
+
+			ptrVeh++;
 		}
-			
-		ptrVeh++;
 	}
 
 
 	//Write one chat message per call 
-	if (m_MessageQueue.size())
+	if (m_MessageQueue.size()) 
 	{
 		chatWnd.SendChatMessage(m_MessageQueue.front());
 		m_MessageQueue.pop_front();

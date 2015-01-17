@@ -19,7 +19,7 @@ DWORD dwRFprocessID = 0;
 
 CListBox *pListBox = NULL;
 
-
+//BEGIN_MESSAGE_MAP(rF2Chat, CListBox)
 
 
 BOOL CALLBACK EnumProcInit(HWND hWnd, LPARAM lParam)
@@ -28,6 +28,7 @@ BOOL CALLBACK EnumProcInit(HWND hWnd, LPARAM lParam)
 	ZeroMemory(title, sizeof(title));
 
 	GetWindowText(hWnd, title, sizeof(title) / sizeof(title[0]));
+
 
 	DWORD dwProcessID;
 	GetWindowThreadProcessId(hWnd, &dwProcessID);
@@ -64,25 +65,60 @@ rF2Chat::rF2Chat() {
 // Checks Server Chat Windows for Message "[name] left the race"
 // returns true when last server message is that whether left
 // driverName contains name of driver
-bool rF2Chat::CheckDriverLeftRace(const CString& driverName) {
-	bool bDriverLeftRace = false;
+bool rF2Chat::CheckDriverLeftRace(CString& driverName) {
 
 	//Check whether a driver left the game
 	if (pListBox) {
-		int cnt = pListBox->GetCount();
-		if ((LB_ERR != cnt) && cnt > lastCnt){
-			//otherwise search list for vehicle in DRS Event List
-			CString txt;
-			lastCnt = cnt;
-			pListBox->GetText(lastCnt - 1, txt);
-			int found = txt.Find(_T(" left the race"));
-			if (-1 != found) {
-				bDriverLeftRace = true;					//remember that driver did leave the game - will be deleted later within the UpdateScoring function
-				pListBox->AddString("Driver removed");
-			}
+		int count = pListBox->GetCount();
+		if ((count <= 0) || (lastCnt == count)) return false;
+
+		CString tmp;
+		pListBox->GetText(count - 1, tmp);
+		int pos = tmp.Find(_T(" left the race"));
+		lastCnt = count;
+
+		if (-1 != pos) {									//substring found ?
+			driverName = tmp.Left(pos);
+			
+			return true;
 		}
+
+		////if (lastCnt < count) {
+		//	CString tmp1, tmp2;
+		//	lastCnt = count;
+		//	
+		//	tmp2 = driverName + _T(" left the race");
+		//	if (0 == tmp1.Compare(tmp2))
+		//		bDriverLeftRace = true;
+		//	if (tmp1 == driverName + _T(" left the race"))
+		//		bDriverLeftRace = true;
+		////}
+
+
+		//CString tmpMsg = driverName + _T(" left the race");
+		//
+		//pListBox->GetText(0, tmp);
+		//int index = pListBox->FindStringExact(0, tmpMsg);
+		//if ((LB_ERR != index) ) {
+		//	bDriverLeftRace = true;
+
+		//}
+
+
+		//int cnt = pListBox->GetCount();
+		//if ((LB_ERR != cnt) && cnt > lastCnt){
+		//	//otherwise search list for vehicle in DRS Event List
+		//	CString txt;
+		//	lastCnt = cnt;
+		//	pListBox->GetText(lastCnt - 1, txt);
+		//	int found = txt.Find(_T(" left the race"));
+		//	if (-1 != found) {
+		//		bDriverLeftRace = true;					//remember that driver did leave the game - will be deleted later within the UpdateScoring function
+		//		pListBox->AddString("Driver removed");
+		//	}
+		//}
 	}
-	return bDriverLeftRace;
+	return false;
 }
 
 void rF2Chat::SendChatMessage(const std::string& strMsg){

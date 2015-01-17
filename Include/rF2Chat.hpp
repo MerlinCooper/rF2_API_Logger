@@ -7,7 +7,7 @@
 class rF2Chat {
 public: 
 	rF2Chat();
-	bool CheckDriverLeftRace(const CString& driverName);
+	bool CheckDriverLeftRace(CString& driverName);
 	void SendChatMessage(const std::string& strMsg);
 	
 protected:

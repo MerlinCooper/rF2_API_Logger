@@ -35,8 +35,8 @@ public:
 	DRSEvent(const TelemInfoV01 &info) { vehicleName = info.mVehicleName; };
 	DRSEvent(std::string d_DriverName, std::string d_vehicleName) { driverName = d_DriverName; vehicleName = d_vehicleName;  counterDRS = lastLap = 0; };
 
-	friend bool operator == (const DRSEvent &drsEvent1, const DRSEvent &drsEvent2) { return (drsEvent1.vehicleName == drsEvent2.vehicleName) /*&& (drsEvent1.driverName == drsEvent2.driverName)*/; };
-	friend bool operator != (const DRSEvent &drsEvent1, const DRSEvent &drsEvent2) { return (drsEvent1.vehicleName != drsEvent2.vehicleName) /*|| (drsEvent1.driverName != drsEvent2.driverName)*/; };
+	friend bool operator == (const DRSEvent &drsEvent1, const DRSEvent &drsEvent2) { return /*(drsEvent1.vehicleName == drsEvent2.vehicleName) && */(drsEvent1.driverName == drsEvent2.driverName); };
+	friend bool operator != (const DRSEvent &drsEvent1, const DRSEvent &drsEvent2) { return /*(drsEvent1.vehicleName != drsEvent2.vehicleName) ||*/ (drsEvent1.driverName != drsEvent2.driverName); };
 	//bool compare(const DRSEvent &DRSEvent) { return driverName == DRSEvent.driverName };
 
 	std::string		driverName;					//name of driver
