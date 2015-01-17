@@ -19,7 +19,8 @@
 
 #include "PluginObjects.hpp"     // base class for plugin objects to derive from
 #include <cmath>                 // for sqrt()
-#include <windows.h>             // for HWND
+
+#include <afxwin.h>
 
 
 // rF and plugins must agree on structure packing, so set it explicitly here ... whatever the current
