@@ -134,7 +134,7 @@ void rF2Chat::SendChatMessage(const std::string& strMsg){
 		// put back the message if there was one
 		if (strlen(szCurrText))
 		{
-			Sleep(20);
+			//Sleep(20);
 			SetWindowText(hwndChatEdit, szCurrText);
 		}
 	}

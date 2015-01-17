@@ -46,7 +46,9 @@ public:
 	long			lastLap;					//number of last lap drivers was running
 	
 	//Variables used for Server Information every x min. 
-	time_t			lastServerInfoSent;
+	//CTime			lastServerInfoSent;
+	void UpdateTime() { time(&srvMsgLastSent); };
+	time_t			srvMsgLastSent;
 };
 
 
@@ -105,10 +107,11 @@ private:
 
 
 	std::string serverWelcomeMessage;
-	void WriteSrvWelcomMsg(const CString driverName);
+	void WriteSrvWelcomMsg(const CString driverName, bool shortMsg=false);
 	CString srvMessageLine[5];
 
-	UINT serverMessageInteraval = 0;
+	UINT srvMsgInt = 0;
+	//CTimeSpan srvMsgInt (0, 0, 0, srvMsgInt);
 	//UINT lastListBoxItemCnt = 0;
 
 	rF2Chat chatWnd;

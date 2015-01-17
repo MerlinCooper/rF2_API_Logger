@@ -44,10 +44,10 @@ MessageBox(NULL, "rF2RaceControl_SetEnvironment is being loaded (DEBUG Version)"
 
 
 void rF2RaceControl_Main::UpdateScoring(const ScoringInfoV01 &info){
-
-
+	
+	//check and update driver list
 	if (NULL != info.mVehicle) {
-		bool bDriverLeftRace = false;
+		//bool bDriverLeftRace = false;
 		
 		VehicleScoringInfoV01 *ptrVeh = info.mVehicle;
 
@@ -61,46 +61,26 @@ void rF2RaceControl_Main::UpdateScoring(const ScoringInfoV01 &info){
 
 		for (long vehCnt = info.mNumVehicles; vehCnt > 0; vehCnt--) {
 			DRSEvent vehicleToSearch(ptrVeh->mDriverName, ptrVeh->mVehicleName);
-			//if (NULL != info.mVehicle)
-			//bDriverLeftRace = chatWnd.CheckDriverLeftRace(info.mVehicle->mDriverName);
-
-			// compare to the previous driver list
-
-
 			POSITION mIndex = mTeams.Find(vehicleToSearch);
 
 			if (NULL == mIndex) {													//new driver not yet in list
+				time(&vehicleToSearch.srvMsgLastSent);								//store when last server welcome was sent.
 				mTeams.AddTail(vehicleToSearch);									//add driver to list
 				WriteSrvWelcomMsg(ptrVeh->mDriverName);								//write Server Welcome Message in Chat Window
+			} else {
+				if (ptrVeh->mInPits) {												//if driver is in pits 
+					DRSEvent* pDriver = &mTeams.GetAt(mIndex);
+					// check whether server welcome message supposed to be re-sent
+					time(&now);
+					if (difftime(now, pDriver->srvMsgLastSent) > srvMsgInt) {		//send server welcome message again after configured time
+						pDriver->UpdateTime();
+						WriteSrvWelcomMsg(pDriver->driverName.c_str(), true);				//write Server Welcome Message in Chat Window
+					}
+				}
 			}
-			//else if (chatWnd.CheckDriverLeftRace(ptrVeh->mDriverName)) {		//driver already in list and did leave the game?
-			//	mTeams.RemoveAt(mIndex);
-			//}
-			//else {																	//check whether driver violated a rule
-
-			//}
-
-
-			//if (bDriverLeftRace) {
-			//	m_DriverList.erase(foundVehicle);
-			//	//POSITION mIndex = mTeams.FindIndex(vehicleToSearch);
-			//	if (NULL != mIndex)
-			//		mTeams.RemoveAt(mIndex);
-			//	bDriverLeftRace = false;											//Set to false because one driver already deleted from list
-			//}
-			//else {
-			//	if (foundVehicle == m_DriverList.end())	{							//if first time that UpdateScoring is called for specific vehicle/driver combination
-			//		WriteSrvWelcomMsg(ptrVeh->mDriverName);			//write Server Welcome Message in Chat Window
-			//		m_DriverList.insert(m_DriverList.begin(), vehicleToSearch);		//add vehicle to the list
-			//		mTeams.AddTail(vehicleToSearch);
-			//	}
-
-			//}
-
 			ptrVeh++;
 		}
 	}
-
 
 	//Write one chat message per call 
 	if (m_MessageQueue.size()) 
@@ -248,7 +228,8 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 		iniFileName.c_str());
 	oss << buffer << "\n";
 	serverWelcomeMessage.assign(oss.str());
-	GetPrivateProfileInt("General", "SrvMsg_Interval", 0, iniFileName.c_str());
+	
+	srvMsgInt = GetPrivateProfileInt("General", "SrvMsg_Interval", 0, iniFileName.c_str());
 	
 	//reset string stream	
 	oss.str("");
@@ -351,16 +332,21 @@ void rF2RaceControl_Main::ExitRealtime() {
 
 }
 
-void rF2RaceControl_Main::WriteSrvWelcomMsg(const CString driverName){
+void rF2RaceControl_Main::WriteSrvWelcomMsg(const CString driverName, bool shortMsg ){
 	CString temp;
-	for (int i = 0; i < 5; i++) {
-		if (i == 0) {
-			temp.Format(srvMessageLine[i], driverName, driverName);
+
+	if (shortMsg){
+		for (int i = 0; i < 5; i++) {
+			if (i == 0) {
+				temp.Format(srvMessageLine[i], driverName, driverName);
+			}
+			else {
+				temp.Format(srvMessageLine[i], driverName);
+			}
+			m_MessageQueue.push_back((LPCSTR)temp);
 		}
-		else {
-			temp.Format(srvMessageLine[i], driverName);		
-		}
-		m_MessageQueue.push_back((LPCSTR)temp);
+	} else {
+		temp.Format(srvMessageLine[1], driverName);
 	}
 
 }
