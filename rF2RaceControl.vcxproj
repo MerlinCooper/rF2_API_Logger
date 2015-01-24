@@ -292,6 +292,7 @@
     <ClCompile Include="Source\rF2Chat.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="Output\Win32\Debug\rF2_API_Logger.dll" />
     <None Include="Output\Win32\Release\rF2_API_Logger.dll" />
     <None Include="Output\x64\Debug\rF2_API_Logger_x64.dll" />
