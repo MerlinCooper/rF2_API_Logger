@@ -120,6 +120,7 @@ private:
 
 	bool bApplyDTM_Rules = false;
 	bool bApplyYellowFlag_Rule = false;
+	bool bDoSrvMsg = false;
 	
 	std::string DTM_InfoMsg;
 	std::string YellowFlag_InfoMsg;
@@ -134,7 +135,7 @@ private:
 	DWORD maxRacingTime = 75;		// maximal allowed driving time in minutes
 	
 	std::string serverWelcomeMessage;
-	void WriteSrvWelcomMsg(const CString driverName, bool shortMsg=false);
+	void WriteSrvWelcomMsg(const CString driverName, bool longMsg=true);
 	CString srvMessageLine[5];
 
 	UINT srvMsgInt = 0;

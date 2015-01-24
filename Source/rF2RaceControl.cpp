@@ -68,21 +68,24 @@ void rF2RaceControl_Main::UpdateScoring(const ScoringInfoV01 &info){
 			if (NULL == mIndex) {													//new driver not yet in list
 				time(&vehicleToSearch.srvMsgLastSent);								//store when last server welcome was sent.
 				mTeams.AddTail(vehicleToSearch);									//add driver to list
-				WriteSrvWelcomMsg(ptrVeh->mDriverName);								//write Server Welcome Message in Chat Window
+				if (bDoSrvMsg) WriteSrvWelcomMsg(ptrVeh->mDriverName);				//write Server Welcome Message in Chat Window
 			} else {
 				DRSEvent* pDriver = &mTeams.GetAt(mIndex);
 
-				//Repeat Wellcome Message (not for VEC)
-				//if (ptrVeh->mInPits) {												//if driver is in pits 
-				//	// check whether server welcome message supposed to be re-sent
-				//	time(&now);
-				//	if (difftime(now, pDriver->srvMsgLastSent) > srvMsgInt) {		//send server welcome message again after configured time
-				//		pDriver->UpdateTime();
-				//		WriteSrvWelcomMsg(pDriver->driverName.c_str(), true);		//write Server Welcome Message in Chat Window
-				//	}
-				//}
-
-
+				//----------------------
+				//repeat Srv Message
+				if (srvMsgInt != 0){
+					//Repeat Wellcome Message (not for VEC)
+					if (ptrVeh->mInPits) {												//if driver is in pits 
+						// check whether server welcome message supposed to be re-sent
+						time(&now);
+						if (difftime(now, pDriver->srvMsgLastSent) > srvMsgInt) {		//send server welcome message again after configured time
+							pDriver->UpdateTime();
+							WriteSrvWelcomMsg(pDriver->driverName.c_str(), false);		//write Server Welcome Message in Chat Window
+						}
+					}
+				}
+				//----------------------
 				//check max driving time
 				if (bApplyEndurance_Rule) {
 					CheckMaxDrivingTime(pDriver, ptrVeh->mInPits);
@@ -242,15 +245,14 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 	ostringstream oss;
 
 	//Read Server Message parameter from INI File
-	GetPrivateProfileString(
-		"General",
-		"SrvMsg",
-		"(C) Merlin Cooper 2015",
-		buffer,
-		sizeof(buffer)-1,
-		iniFileName.c_str());
+	GetPrivateProfileString("General","SrvMsg","(C) Merlin Cooper 2015",buffer,sizeof(buffer)-1,iniFileName.c_str());
 	oss << buffer << "\n";
 	serverWelcomeMessage.assign(oss.str());
+	switch (GetPrivateProfileInt("General", "Activate_SrvMsg", 0, iniFileName.c_str())){
+	case 0:
+		bDoSrvMsg = false; break;
+	case 1: bDoSrvMsg = true;
+	}
 	
 	srvMsgInt = GetPrivateProfileInt("General", "SrvMsg_Interval", 0, iniFileName.c_str());
 	
@@ -261,16 +263,10 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 	case 0: 
 		bApplyDTM_Rules = false; break;
 	case 1: bApplyDTM_Rules = true;
-	};
+	}
+
 	if (bApplyDTM_Rules) {			//read further values just in case DTM rules are activated
-		GetPrivateProfileString(
-			"DTM_Rules",
-			"Info",
-			"DTM DRS RULES ACTIVE - ONLY ONE TIME ACTIVATION OF DRS PER LAP ALLOWED",
-			buffer,
-			sizeof(buffer)-1,
-			iniFileName.c_str());
-		
+		GetPrivateProfileString("DTM_Rules","Info","DTM DRS RULES ACTIVE - ONLY ONE TIME ACTIVATION OF DRS PER LAP ALLOWED",buffer,sizeof(buffer)-1,iniFileName.c_str());
 		oss << buffer << "\n";
 		DTM_InfoMsg.append(oss.str());
 		m_MessageQueue.push_back("DTM DRS RULES ACTIVE");
@@ -291,14 +287,7 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 	case 0: bApplyYellowFlag_Rule = false; break;
 	case 1: bApplyYellowFlag_Rule = true;
 	};
-	if (bApplyYellowFlag_Rule) {
-		GetPrivateProfileString(
-			"YELLOW_FLAG",
-			"Info",
-			"YELLOW FLAG RULES ACTIVE - REDUCE SPEED IN CASE OF YELLOW FLAG",
-			buffer,
-			sizeof(buffer)-1,
-			iniFileName.c_str());
+	if (bApplyYellowFlag_Rule) {GetPrivateProfileString("YELLOW_FLAG","Info","YELLOW FLAG RULES ACTIVE - REDUCE SPEED IN CASE OF YELLOW FLAG",buffer,sizeof(buffer)-1,iniFileName.c_str());
 		oss << buffer << "\n";
 		YellowFlag_InfoMsg.append(oss.str());;
 		m_MessageQueue.push_back("YELLOW FLAG RULES ACTIVE (currently not implemented)");
@@ -386,10 +375,10 @@ void rF2RaceControl_Main::ExitRealtime() {
 
 }
 
-void rF2RaceControl_Main::WriteSrvWelcomMsg(const CString driverName, bool shortMsg ){
+void rF2RaceControl_Main::WriteSrvWelcomMsg(const CString driverName, bool longMsg ){
 	CString temp;
 
-	if (shortMsg){
+	if (longMsg){
 		for (int i = 0; i < 5; i++) {
 			if (i == 0) {
 				temp.Format(srvMessageLine[i], driverName, driverName);
@@ -407,31 +396,8 @@ void rF2RaceControl_Main::WriteSrvWelcomMsg(const CString driverName, bool short
 
 
 void rF2RaceControl_Main::CheckMaxDrivingTime(DRSEvent *pDriver, const bool bInPits){
-	time_t now;
-	time(&now);
-
 	if (!bInPits && !pDriver->bStintStarted)
 		pDriver->StartMonitoringMaxDrivingTime(maxRacingTime);
-
-	//if ((!pDriver->bStintStarted) && (true == pDriver->bLastPitStatus) && (false == bPitStatus)) {
-	//	//vehicle just left the pits and driver is just string his stint
-	//	pDriver->StartMonitoringMaxDrivingTime(maxRacingTime);
-	//	pDriver->bStintStarted = true;
-	//}
-
-	//if (pDriver->startDriving == 0)
-	//	pDriver->startDriving = now;
-
-	//if ((true ==pDriver->bLastPitStatus) && (false == bPitStatus)){
-	//	//vehicle just left the pits
-	//	pDriver->startDriving = now;
-	//}
-	//else if (difftime(now, pDriver->startDriving) > maxDrivingTime){
-	//	//Driver to long on track
-	//	SetPenalty(penaltyEndurance, pDriver->driverName, ENDURANCE_MAX_STINT_TIME);
-	//	pDriver->startDriving = now;
-	//}
-	//pDriver->bLastPitStatus = bPitStatus;
 }
 
 DRSEvent::~DRSEvent(){
