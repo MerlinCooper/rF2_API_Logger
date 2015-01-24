@@ -13,7 +13,7 @@
 
 
 // GLOBAL variables
-const std::string version_number("rF2RaceControl PlugIn 0.7.2");
+const std::string version_number("rF2RaceControl PlugIn 0.7.3");
 
 
 // plugin information
@@ -39,7 +39,9 @@ using namespace std;
 extern DWORD dwRFprocessID;
 
 rF2RaceControl_Main::rF2RaceControl_Main() {
+#ifdef _DEBUG
 MessageBox(NULL, "rF2RaceControl_SetEnvironment is being loaded (DEBUG Version)", "Debug Message", MB_OK); 
+#endif
 };
 
 
@@ -68,15 +70,31 @@ void rF2RaceControl_Main::UpdateScoring(const ScoringInfoV01 &info){
 				mTeams.AddTail(vehicleToSearch);									//add driver to list
 				WriteSrvWelcomMsg(ptrVeh->mDriverName);								//write Server Welcome Message in Chat Window
 			} else {
-				if (ptrVeh->mInPits) {												//if driver is in pits 
-					DRSEvent* pDriver = &mTeams.GetAt(mIndex);
-					// check whether server welcome message supposed to be re-sent
-					time(&now);
-					if (difftime(now, pDriver->srvMsgLastSent) > srvMsgInt) {		//send server welcome message again after configured time
-						pDriver->UpdateTime();
-						WriteSrvWelcomMsg(pDriver->driverName.c_str(), true);				//write Server Welcome Message in Chat Window
+				DRSEvent* pDriver = &mTeams.GetAt(mIndex);
+
+				//Repeat Wellcome Message (not for VEC)
+				//if (ptrVeh->mInPits) {												//if driver is in pits 
+				//	// check whether server welcome message supposed to be re-sent
+				//	time(&now);
+				//	if (difftime(now, pDriver->srvMsgLastSent) > srvMsgInt) {		//send server welcome message again after configured time
+				//		pDriver->UpdateTime();
+				//		WriteSrvWelcomMsg(pDriver->driverName.c_str(), true);		//write Server Welcome Message in Chat Window
+				//	}
+				//}
+
+
+				//check max driving time
+				if (bApplyEndurance_Rule) {
+					CheckMaxDrivingTime(pDriver, ptrVeh->mInPits);
+					if ((NULL != pDriver->pRaceTimer) && pDriver->pRaceTimer->CheckPenalty()) {
+						SetPenalty(penaltyEndurance, pDriver->driverName, ENDURANCE_MAX_STINT_TIME);
+						delete pDriver->pRaceTimer; 
+						pDriver->pRaceTimer = NULL; 
+						pDriver->bStintStarted = false;
 					}
+
 				}
+
 			}
 			ptrVeh++;
 		}
@@ -183,6 +201,11 @@ void rF2RaceControl_Main::StartSession()
 	//SendChatMessage(oss.str());
 }
 
+void rF2RaceControl_Main::EndSession(){					// session ended
+	mTeams.RemoveAll();
+}
+
+
 /*void rF2RaceControl_Main::SendChatMessage(const std::string& strMsg) const
 {
 	if (hwndSendChatButton && hwndChatEdit) {
@@ -232,8 +255,7 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 	srvMsgInt = GetPrivateProfileInt("General", "SrvMsg_Interval", 0, iniFileName.c_str());
 	
 	//reset string stream	
-	oss.str("");
-	oss.clear();
+	oss.str(""); oss.clear();
 
 	switch (GetPrivateProfileInt("DTM_Rules", "Regulation_Active", 0, iniFileName.c_str())){
 	case 0: 
@@ -262,7 +284,8 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 		}
 	}
 
-	oss.seekp(ios::beg);			//set pointer in outputstream to begin
+	//reset string stream	
+	oss.str(""); oss.clear();
 
 	switch (GetPrivateProfileInt("YELLOW_FLAG", "Regulation_Active", 0, iniFileName.c_str())){
 	case 0: bApplyYellowFlag_Rule = false; break;
@@ -278,7 +301,34 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 			iniFileName.c_str());
 		oss << buffer << "\n";
 		YellowFlag_InfoMsg.append(oss.str());;
-		m_MessageQueue.push_back("YELLOW FLAG RULES ACTIVE (currently not implemented");
+		m_MessageQueue.push_back("YELLOW FLAG RULES ACTIVE (currently not implemented)");
+	}
+
+	//reset string stream	
+	oss.str(""); oss.clear();
+
+	//Read all necessary values for Endurance Timing Regulation
+	switch (GetPrivateProfileInt("ENDURANCE", "Regulation_Active", 0, iniFileName.c_str())){
+	case 0: bApplyEndurance_Rule = false; break;
+	case 1: bApplyEndurance_Rule = true;
+	};
+	if (bApplyEndurance_Rule) {
+		GetPrivateProfileString("ENDURANCE","Info","ENDURANCE: Maximumg Driving Time rule applyed",buffer,sizeof(buffer) - 1,iniFileName.c_str());
+		//read type of penalty to be given if DTM rule is violated
+		switch (GetPrivateProfileInt("ENDURANCE", "Penalty", 0, iniFileName.c_str())){
+		case 1: penaltyEndurance = DRIVE_THROUGH; break;
+		case 2: penaltyEndurance = STOP_GO; break;
+		default:
+			penaltyEndurance = WARNING;
+		}
+		//read value for maximum allowed driving time 
+		maxRacingTime = GetPrivateProfileInt("ENDURANCE", "MaxRacingTime", 75, iniFileName.c_str());
+		stopGoTime = GetPrivateProfileInt("ENDURANCE", "StopGoTime", 60, iniFileName.c_str());
+		if (stopGoTime < 0 || stopGoTime > 60) stopGoTime = 60;
+
+		oss << buffer << "\n";
+		maxDrivingTime_InfoMsg.append(oss.str());;
+		m_MessageQueue.push_back(maxDrivingTime_InfoMsg.c_str());
 	}
 }
 
@@ -286,24 +336,25 @@ void  rF2RaceControl_Main::WriteIniFile(const std::string& iniFileName){
 
 }
 
-void rF2RaceControl_Main::SetPenalty(penalty_type penalty, std::string &driverName, rule_type rule){
+void rF2RaceControl_Main::SetPenalty(penalty_type penalty, std::string &driverName, rule_type rule, UINT iStopGoTime){
 	std::ostringstream oss;
 
 	switch (penalty) {
 	case DRIVE_THROUGH:
-		oss << "/addpenalty -1 " << driverName << "\n";			//chat text for drive through
-		//m_MessageQueue.push_back(oss.str());					//Output to chat window
+		oss << "/addpenalty -1 " << driverName << "\n";							//chat text for drive through
+		break;
 	case STOP_GO:
-//		oss << "/addpenalty " << /* Sekunden Stop/Go" */ << driverName << "\n";			//chat text for 60 sec stop and go
+		oss << "/addpenalty " << iStopGoTime << " " << driverName << "\n";		//chat text for 60 sec stop and go
 		break;
 	case WARNING:
-		oss << "/w " << driverName << "WARNING" << "\n";		//chat text for 60 sec stop and go
+		oss << "/w " << driverName << "WARNING" << "\n";						//chat text for warning
 		break;
 	}
 
 	m_MessageQueue.push_back(oss.str());				//Output to chat window
 	logFileStewards << oss.str();						//Output to log file for stewards
-	oss.flush();
+	
+	oss.str(""); oss.clear();
 
 	switch (rule) {
 	case DTM_DRS:
@@ -311,6 +362,9 @@ void rF2RaceControl_Main::SetPenalty(penalty_type penalty, std::string &driverNa
 		break;
 	case YELLOW_FLAG:
 		oss << "/w" << driverName << "YELLOW FLAG VIOLATED" << "\n";		//chat text for warning
+		break;
+	case ENDURANCE_MAX_STINT_TIME:
+		oss << "/w" << driverName << "MAXIMUM DRIVING TIME PER STINT EXCEEDED" << "\n";		//chat text for warning
 	}
 
 	m_MessageQueue.push_back(oss.str());				//Output to chat window
@@ -352,3 +406,41 @@ void rF2RaceControl_Main::WriteSrvWelcomMsg(const CString driverName, bool short
 }
 
 
+void rF2RaceControl_Main::CheckMaxDrivingTime(DRSEvent *pDriver, const bool bInPits){
+	time_t now;
+	time(&now);
+
+	if (!bInPits && !pDriver->bStintStarted)
+		pDriver->StartMonitoringMaxDrivingTime(maxRacingTime);
+
+	//if ((!pDriver->bStintStarted) && (true == pDriver->bLastPitStatus) && (false == bPitStatus)) {
+	//	//vehicle just left the pits and driver is just string his stint
+	//	pDriver->StartMonitoringMaxDrivingTime(maxRacingTime);
+	//	pDriver->bStintStarted = true;
+	//}
+
+	//if (pDriver->startDriving == 0)
+	//	pDriver->startDriving = now;
+
+	//if ((true ==pDriver->bLastPitStatus) && (false == bPitStatus)){
+	//	//vehicle just left the pits
+	//	pDriver->startDriving = now;
+	//}
+	//else if (difftime(now, pDriver->startDriving) > maxDrivingTime){
+	//	//Driver to long on track
+	//	SetPenalty(penaltyEndurance, pDriver->driverName, ENDURANCE_MAX_STINT_TIME);
+	//	pDriver->startDriving = now;
+	//}
+	//pDriver->bLastPitStatus = bPitStatus;
+}
+
+DRSEvent::~DRSEvent(){
+	if (pRaceTimer) delete pRaceTimer;
+}
+
+void DRSEvent::StartMonitoringMaxDrivingTime(DWORD maxTime){
+	if (pRaceTimer == NULL) {
+		pRaceTimer = new EnduranceRaceTime(maxTime);
+		bStintStarted = true;
+	}
+}
