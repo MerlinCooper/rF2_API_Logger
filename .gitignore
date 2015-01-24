@@ -1,2 +1,4 @@
 # git ignore file
 rF2RaceControl.opensdf
+Output
+Output/*
