@@ -101,6 +101,8 @@ private:
 	void UpdateTelemetry(const TelemInfoV01 &info);			// update plugin with telemetry info
 
 	//void SendChatMessage(const std::string& strMsg) const;
+	bool WantsToDisplayMessage(MessageInfoV01 &msgInfo);
+
 	void CheckMaxDrivingTime(DRSEvent *pDriver, const bool bInPits);
 
 	void SetPenalty(penalty_type penalty, std::string &driverName, rule_type rule, UINT iStopGoTime = 0);

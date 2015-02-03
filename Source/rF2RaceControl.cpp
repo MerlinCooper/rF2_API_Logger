@@ -104,11 +104,11 @@ void rF2RaceControl_Main::UpdateScoring(const ScoringInfoV01 &info){
 	}
 
 	//Write one chat message per call 
-	if (m_MessageQueue.size()) 
-	{
-		chatWnd.SendChatMessage(m_MessageQueue.front());
-		m_MessageQueue.pop_front();
-	}
+	//if (m_MessageQueue.size()) 
+	//{
+	//	chatWnd.SendChatMessage(m_MessageQueue.front());
+	//	m_MessageQueue.pop_front();
+	//}
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -145,6 +145,18 @@ void rF2RaceControl_Main::UpdateTelemetry(const TelemInfoV01 &info){
 			}
 		}
 	}
+}
+
+bool rF2RaceControl_Main::WantsToDisplayMessage(MessageInfoV01 &msgInfo) // set message and return true
+{ 
+	if (m_MessageQueue.size()) {
+		msgInfo.mDestination = 1;
+		msgInfo.mTranslate = 0;
+		sprintf(msgInfo.mText, m_MessageQueue.front().c_str());
+		m_MessageQueue.pop_front();
+		return true;
+	} 
+	return false;
 }
 
 //rF2RaceControl_Main class definition -test
