@@ -2,3 +2,7 @@
 rF2RaceControl.opensdf
 Output
 rF2RaceControl.sdf
+*.sdf
+.gitignore
+.gitignore
+*.gitignore
