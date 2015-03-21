@@ -264,7 +264,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\Debug/InternalsPlugin.pdb</ProgramDatabaseFile>
       <ImportLibrary>T:\01_rF2_910\Bin64\InternalsPlugin.lib</ImportLibrary>
-      <OutputFile>T:\01_rF2_910\Bin64\PlugIns\$(TargetName)_x64$(TargetExt)</OutputFile>
+      <OutputFile>D:\Games\rF2_DevServer\01 rF2_930\Bin64\Plugins\$(TargetName)_x64$(TargetExt)</OutputFile>
       <AdditionalDependencies>uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceFileOutput>
       </ForceFileOutput>
@@ -284,9 +284,12 @@
     <ClInclude Include="Include\PluginObjects.hpp" />
     <ClInclude Include="Include\rF2Chat.hpp" />
     <ClInclude Include="Include\rF2RaceControl.hpp" />
+    <ClInclude Include="Include\RaceControlDlg.h" />
     <ClInclude Include="Resource\resource.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\RaceControlDlg.cpp" />
     <ClCompile Include="Source\EnduranceRaceTime.cpp" />
     <ClCompile Include="Source\rF2RaceControl.cpp" />
     <ClCompile Include="Source\rF2Chat.cpp" />

@@ -10,6 +10,7 @@
 #include <atlstr.h>
 #include "resource.h"
 #include "rF2Chat.hpp"
+#include "RaceControlDlg.h"
 
 
 // GLOBAL variables
@@ -197,6 +198,9 @@ void rF2RaceControl_Main::SetEnvironment( const EnvironmentInfoV01 &info )
 
 	//Read INI File 
 	ReadIniFile(iniConfigFilename);	
+
+	//Show RaceControl Dialog
+	RaceControlDlg raceControl;
 }
 
 void rF2RaceControl_Main::StartSession()
