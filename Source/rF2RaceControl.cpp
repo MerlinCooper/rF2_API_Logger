@@ -10,7 +10,6 @@
 #include <atlstr.h>
 #include "resource.h"
 #include "rF2Chat.hpp"
-#include "RaceControlDlg.h"
 
 
 // GLOBAL variables
@@ -40,9 +39,12 @@ using namespace std;
 extern DWORD dwRFprocessID;
 
 rF2RaceControl_Main::rF2RaceControl_Main() {
-#ifdef _DEBUG
-MessageBox(NULL, "rF2RaceControl_SetEnvironment is being loaded (DEBUG Version)", "Debug Message", MB_OK); 
-#endif
+	#ifdef _DEBUG
+	MessageBox(NULL, "rF2RaceControl_SetEnvironment is being loaded (DEBUG Version)", "Debug Message", MB_OK); 
+	#endif
+
+	//Initialize and start TCP/IP Socket Server
+
 };
 
 
@@ -199,8 +201,11 @@ void rF2RaceControl_Main::SetEnvironment( const EnvironmentInfoV01 &info )
 	//Read INI File 
 	ReadIniFile(iniConfigFilename);	
 
+	//Create TCP Socket
+	mp_C_TCP_Server_Manager = new C_TCP_Server_Manager(&m_C_Log_Writer, C_TCP_DEFAULT_SOCKET_PORT, C_TCP_DEFAULT_IP_ADDRESS);
+
 	//Show RaceControl Dialog
-	RaceControlDlg raceControl;
+	//RaceControlDlg raceControl;
 }
 
 void rF2RaceControl_Main::StartSession()
@@ -257,20 +262,31 @@ void rF2RaceControl_Main::EndSession(){					// session ended
 
 void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 	//Read from Ini-File whether DTM Rules should be activated
-	char buffer[512];
+	char buffer[1024];
+	int srvMsgLineCnt = 0; 
 	ostringstream oss;
 
 	//Read Server Message parameter from INI File
-	GetPrivateProfileString("General","SrvMsg","(C) Merlin Cooper 2015",buffer,sizeof(buffer)-1,iniFileName.c_str());
-	oss << buffer << "\n";
-	serverWelcomeMessage.assign(oss.str());
+	
+	
 	switch (GetPrivateProfileInt("General", "Activate_SrvMsg", 0, iniFileName.c_str())){
 	case 0:
 		bDoSrvMsg = false; break;
-	case 1: bDoSrvMsg = true;
+	case 1: 
+		bDoSrvMsg = true;
+		srvMsgLineCnt = GetPrivateProfileInt("General", "SrvMsg_LineCount", 0, iniFileName.c_str());
+		for (int i = 1; i <= srvMsgLineCnt; i++){
+			CString srvMsgTag;
+			srvMsgTag.Format("SrvMsg_%d", i);
+			GetPrivateProfileString("General", srvMsgTag, "(C) Merlin Cooper 2015", buffer, sizeof(buffer) - 1, iniFileName.c_str());
+			oss << buffer << "\n";
+		}
+		serverWelcomeMessage.assign(oss.str());
+			
+		srvMsgInt = GetPrivateProfileInt("General", "SrvMsg_Interval", 0, iniFileName.c_str());
 	}
 	
-	srvMsgInt = GetPrivateProfileInt("General", "SrvMsg_Interval", 0, iniFileName.c_str());
+	
 	
 	//reset string stream	
 	oss.str(""); oss.clear();
@@ -335,6 +351,15 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 		maxDrivingTime_InfoMsg.append(oss.str());;
 		m_MessageQueue.push_back(maxDrivingTime_InfoMsg.c_str());
 	}
+
+	// Read INI File values for TCP Socket Communication
+
+
+	GetPrivateProfileString("initialize", "IDC_EDIT1", "", sz_TCP_Adress.GetBuffer(C_TCP_MAX_IP_ADDRESS_LENGTH), C_TCP_MAX_IP_ADDRESS_LENGTH, iniFileName.c_str());
+
+	//ui_TCP_Adress = GetPrivateProfileInt("General", "IP_Adress", C_TCP_DEFAULT_IP_ADDRESS, iniFileName.c_str();
+	//GetPrivateProfileString("General", "IP_Port", C_TCP_DEFAULT_IP_ADDRESS, sz_TCP_Adress.GetBuffer(MAX_IP);  buffer, sizeof(buffer) - 1, iniFileName.c_str()
+	ui_TCP_Port = GetPrivateProfileInt("General", "IP_Port", C_TCP_DEFAULT_SOCKET_PORT, iniFileName.c_str());
 }
 
 void  rF2RaceControl_Main::WriteIniFile(const std::string& iniFileName){

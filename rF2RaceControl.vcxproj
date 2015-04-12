@@ -20,6 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D3A72186-64DD-48E6-95EA-3DBC2D668238}</ProjectGuid>
+    <ProjectName>rF2RaceControl_PlugIn</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -74,24 +75,28 @@
     <IntDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\TCPSockets</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
     <OutDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\TCPSockets</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\TCPSockets</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
     <OutDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)\Output\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)\TCPSockets</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -284,15 +289,25 @@
     <ClInclude Include="Include\PluginObjects.hpp" />
     <ClInclude Include="Include\rF2Chat.hpp" />
     <ClInclude Include="Include\rF2RaceControl.hpp" />
-    <ClInclude Include="Include\RaceControlDlg.h" />
     <ClInclude Include="Resource\resource.h" />
-    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="TCPSockets\C_Log_Writer.h" />
+    <ClInclude Include="TCPSockets\C_TCP_Client.h" />
+    <ClInclude Include="TCPSockets\C_TCP_Constants.h" />
+    <ClInclude Include="TCPSockets\C_TCP_Consts_and_Enums.h" />
+    <ClInclude Include="TCPSockets\C_TCP_Format_WSA_Text.h" />
+    <ClInclude Include="TCPSockets\C_TCP_IADS_Typedefs.h" />
+    <ClInclude Include="TCPSockets\C_TCP_Server_Manager.h" />
+    <ClInclude Include="TCPSockets\C_TCP_Server_Sender.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\RaceControlDlg.cpp" />
     <ClCompile Include="Source\EnduranceRaceTime.cpp" />
     <ClCompile Include="Source\rF2RaceControl.cpp" />
     <ClCompile Include="Source\rF2Chat.cpp" />
+    <ClCompile Include="TCPSockets\C_Log_Writer.cpp" />
+    <ClCompile Include="TCPSockets\C_TCP_Client.cpp" />
+    <ClCompile Include="TCPSockets\C_TCP_Format_WSA_Text.cpp" />
+    <ClCompile Include="TCPSockets\C_TCP_Server_Manager.cpp" />
+    <ClCompile Include="TCPSockets\C_TCP_Server_Sender.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

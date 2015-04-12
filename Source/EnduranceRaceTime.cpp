@@ -5,7 +5,7 @@
 EnduranceRaceTime::EnduranceRaceTime(DWORD maxTimeMinutes){
 	//Create Worker Thread which suspends x min and than calls CheckRegulation
 	maxDrivingTime = 60 * maxTimeMinutes*1E3;
-	pMonitorThread = AfxBeginThread(&WaitThread, this);
+	pMonitorThread = AfxBeginThread(&WaitThread, (LPVOID)this);
 }
 
 EnduranceRaceTime::~EnduranceRaceTime(){

@@ -20,15 +20,17 @@
 #define _RF2RACECONTROL_H
 
 #include "InternalsPlugin.hpp"
-
 #include "EnduranceRaceTime.h"
-
 #include <set>
 #include <vector>
 #include <list>
 #include <fstream>
-
 #include "rF2Chat.hpp"
+#include "C_TCP_Server_Manager.h"
+#include "C_Log_Writer.h"
+#include "C_TCP_Server_Manager.h"
+#include "C_TCP_Server_Sender.h"
+
 
 //class to encapsulate events for a specific driver (at the moment just number times DRS actived per Lap;
 class DRSEvent {
@@ -146,6 +148,16 @@ private:
 
 	rF2Chat chatWnd;
 
+	//TCP-IP Socket Connection
+	C_Log_Writer			m_C_Log_Writer;
+	C_TCP_Server_Manager	*mp_C_TCP_Server_Manager = NULL;
+	C_TCP_Server_Sender		*mp_C_TCP_Server_Sender = NULL;
+	C_TCP_TD_SEND_STATUS	m_send_data_status;					// Status returned when sending data to the client.
+	CString					sz_TCP_Adress;
+	UINT					ui_TCP_Port;
+
+
+	//Log File, Debugging
 	std::ofstream logFileStewards;
 	time_t now;
 
