@@ -44,7 +44,7 @@ rF2RaceControl_Main::rF2RaceControl_Main() {
 	#endif
 
 	//Initialize and start TCP/IP Socket Server
-
+	AfxSocketInit();
 };
 
 
@@ -202,7 +202,11 @@ void rF2RaceControl_Main::SetEnvironment( const EnvironmentInfoV01 &info )
 	ReadIniFile(iniConfigFilename);	
 
 	//Create TCP Socket
-	mp_C_TCP_Server_Manager = new C_TCP_Server_Manager(&m_C_Log_Writer, C_TCP_DEFAULT_SOCKET_PORT, C_TCP_DEFAULT_IP_ADDRESS);
+	//CSocket testSrv;
+	//testSrv.Create(ui_TCP_Port);
+	mTCPServer.Create(ui_TCP_Port); // , SOCK_STREAM, sz_TCP_Adress);
+	mTCPServer.Listen();
+	//mp_C_TCP_Server_Manager = new C_TCP_Server_Manager(&m_C_Log_Writer, C_TCP_DEFAULT_SOCKET_PORT, C_TCP_DEFAULT_IP_ADDRESS);
 
 	//Show RaceControl Dialog
 	//RaceControlDlg raceControl;
@@ -355,11 +359,12 @@ void  rF2RaceControl_Main::ReadIniFile(const std::string& iniFileName){
 	// Read INI File values for TCP Socket Communication
 
 
-	GetPrivateProfileString("initialize", "IDC_EDIT1", "", sz_TCP_Adress.GetBuffer(C_TCP_MAX_IP_ADDRESS_LENGTH), C_TCP_MAX_IP_ADDRESS_LENGTH, iniFileName.c_str());
+	GetPrivateProfileString("General", "IP_Address", "", buffer, sizeof(buffer) - 1, iniFileName.c_str());
+	strcpy(sz_TCP_Adress.GetBuffer(), buffer);
 
 	//ui_TCP_Adress = GetPrivateProfileInt("General", "IP_Adress", C_TCP_DEFAULT_IP_ADDRESS, iniFileName.c_str();
 	//GetPrivateProfileString("General", "IP_Port", C_TCP_DEFAULT_IP_ADDRESS, sz_TCP_Adress.GetBuffer(MAX_IP);  buffer, sizeof(buffer) - 1, iniFileName.c_str()
-	ui_TCP_Port = GetPrivateProfileInt("General", "IP_Port", C_TCP_DEFAULT_SOCKET_PORT, iniFileName.c_str());
+	ui_TCP_Port = GetPrivateProfileInt("General", "IP_Port", 49000, iniFileName.c_str());
 }
 
 void  rF2RaceControl_Main::WriteIniFile(const std::string& iniFileName){
